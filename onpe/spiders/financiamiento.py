@@ -17,7 +17,7 @@ class FinanciamientoSpider(scrapy.Spider):
     def start_requests(self):
         page_url = 'https://www.onpe.gob.pe/loadSelect/'
 
-        for tipo in range(1, 5):
+        for tipo in range(1, 6):
 
             params = {
                 'vType': 'aportes',

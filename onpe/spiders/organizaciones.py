@@ -7,11 +7,12 @@ import pymongo
 client = pymongo.MongoClient()
 db = client.onpe
 collection = db.personasJuridicas
+personasJuridicas2 = db.personasJuridicas2
 
 TIPO_ORGANIZACION = ["PARTIDO POLITICO", "ALIANZA ELECTORAL", "MOVIMIENTO REGIONAL", "ORGANIZACION POLITICA PROVINCIAL", "ORGANIZACION POLITICA DISTRITAL"]
 
-class FinanciamientoSpider(scrapy.Spider):
-    name = "financiamiento"
+class OrganizacionesSpider(scrapy.Spider):
+    name = "organizaciones"
     allowed_domains = []
 
 
@@ -39,11 +40,15 @@ class FinanciamientoSpider(scrapy.Spider):
         options = response.xpath("//option")
 
         for option in options:
-            obj = {
-                'tipoDoc': "RUC",
-                'numDoc':  str(option.xpath('@value').extract_first()),
-                'razonSocial': option.xpath('./text()').extract_first(),
-                'tipoOrg': "Organización Política",
-                'tipoOrgPol': response.meta['tipoOrganizacion'],
-            }
-            collection.save(obj)
+
+            if(option.xpath('@value').extract_first()):
+                print(option.xpath('@value').extract_first())
+                obj = {
+                    'id':  int(option.xpath('@value').extract_first()),
+                    'tipoDoc': "RUC",
+                    'numDoc':  str(option.xpath('@value').extract_first()),
+                    'razonSocial': option.xpath('./text()').extract_first(),
+                    'tipoOrg': "Organización Política",
+                    'tipoOrgPol': response.meta['tipoOrganizacion'],
+                }
+                personasJuridicas2.update({'id': int(option.xpath('@value').extract_first())}, obj, upsert=True)

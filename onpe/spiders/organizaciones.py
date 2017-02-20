@@ -7,7 +7,6 @@ import pymongo
 client = pymongo.MongoClient()
 db = client.onpe
 collection = db.personasJuridicas
-personasJuridicas2 = db.personasJuridicas2
 
 TIPO_ORGANIZACION = ["PARTIDO POLITICO", "ALIANZA ELECTORAL", "MOVIMIENTO REGIONAL", "ORGANIZACION POLITICA PROVINCIAL", "ORGANIZACION POLITICA DISTRITAL"]
 
@@ -19,7 +18,7 @@ class OrganizacionesSpider(scrapy.Spider):
     def start_requests(self):
         page_url = 'https://www.onpe.gob.pe/loadSelect/'
 
-        for tipo in range(1, 5):
+        for tipo in range(1, 6):
 
             params = {
                 'vType': 'aportes',
@@ -27,7 +26,7 @@ class OrganizacionesSpider(scrapy.Spider):
             }
 
             meta = {
-                'tipoOrganizacion': TIPO_ORGANIZACION[tipo],
+                'tipoOrganizacion': TIPO_ORGANIZACION[tipo - 1],
             }
 
             yield scrapy.FormRequest(url=page_url, formdata=params, meta=meta,
@@ -51,4 +50,4 @@ class OrganizacionesSpider(scrapy.Spider):
                     'tipoOrg': "Organización Política",
                     'tipoOrgPol': response.meta['tipoOrganizacion'],
                 }
-                personasJuridicas2.update({'id': int(option.xpath('@value').extract_first())}, obj, upsert=True)
+                collection.update({'id': int(option.xpath('@value').extract_first())}, obj, upsert=True)

@@ -6,7 +6,7 @@ import pymongo
 
 client = pymongo.MongoClient()
 db = client.onpe
-collection = db.aportantes
+collection = db.aportantes_ge_2015_OK
 
 class FinanciamientoSpider(scrapy.Spider):
     name = "financiamiento"
@@ -24,14 +24,12 @@ class FinanciamientoSpider(scrapy.Spider):
                 'vValu': str(tipo),
             }
 
-            print(str(params))
-
             meta = {
                 'tipoOrganizacion': str(tipo),
             }
 
             yield scrapy.FormRequest(url=page_url, formdata=params, meta=meta,
-                callback=self.load_select_request)
+                                     callback=self.load_select_request)
 
     def load_select_request(self, response):
 
@@ -53,7 +51,7 @@ class FinanciamientoSpider(scrapy.Spider):
             }
 
             yield scrapy.FormRequest(url=page_url, formdata=params, meta=meta,
-                callback=self.load_detail_request)
+                                     callback=self.load_detail_request)
 
     def load_detail_request(self, response):
 
@@ -88,8 +86,9 @@ class FinanciamientoSpider(scrapy.Spider):
                         'partido': response.meta['partido'],
                     }
 
-                    yield scrapy.FormRequest(url=page_url, formdata=params, meta=meta,
-                        callback=self.make_detail_all_request)
+                    if params['ani'] in ['2015', '2016', '2017']:
+                        yield scrapy.FormRequest(url=page_url, formdata=params, meta=meta,
+                                                 callback=self.make_detail_all_request)
 
                 elif href.startswith('javascript:verDetalleAportesSemestralOrg'):
 
@@ -114,8 +113,9 @@ class FinanciamientoSpider(scrapy.Spider):
                         'partido': response.meta['partido'],
                     }
 
-                    yield scrapy.FormRequest(url=page_url, formdata=params, meta=meta,
-                        callback=self.make_detail_all_request)
+                    if params['ani'] == '2015' or params['ani'] == '2016' or params['ani'] == '2017':
+                        yield scrapy.FormRequest(url=page_url, formdata=params, meta=meta,
+                                                 callback=self.make_detail_all_request)
 
     def make_detail_all_request(self, response):
 
@@ -124,7 +124,9 @@ class FinanciamientoSpider(scrapy.Spider):
         number_of_pages = response.xpath("//input[@id = 'total']/@value")
         number_of_pages = int(number_of_pages.extract_first())
 
-        for pag in range(1, number_of_pages + 1):
+        self.extract_data(response) # Extract data from page 1
+
+        for pag in range(2, number_of_pages + 1):
 
             params = {
                 'txtID': response.meta['txtID'],
@@ -145,10 +147,9 @@ class FinanciamientoSpider(scrapy.Spider):
             }
 
             yield scrapy.FormRequest(url=page_url, formdata=params, meta=meta,
-                callback=self.load_detail_all_request)
+                                     callback=self.extract_data)
 
-    def load_detail_all_request(self, response):
-
+    def extract_data(self, response):
         trs = response.xpath("//table[@class = 'display dtable06 tabla99']//tr")
 
         for tr in trs:
